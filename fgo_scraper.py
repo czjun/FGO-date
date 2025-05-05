@@ -15,6 +15,7 @@ BANGUMI_CHARACTERS_FILE = "fgo_bangumi_characters.json"
 OUTPUT_FILENAME = "fgo_output.json"
 UNMAPPED_SERVANTS_FILE = "unmapped_fgo_servants.json"
 UNUSED_BANGUMI_FILE = "unused_bangumi_entries.json"
+ALL_SERVANTS_FILE = "all_fgo_servants.json"
 # 禁用代理，解决连接问题
 PROXIES = {
     "http": None,
@@ -561,6 +562,31 @@ def create_test_data(bangumi_map):
     print(f"创建了 {len(fgo_data)} 个测试从者数据")
     return fgo_data
 
+def print_all_servants(fgo_data, output_file="all_fgo_servants.json"):
+    """将所有从者数据以unmapped_fgo_servants.json相同的格式输出到文件中"""
+    print(f"开始将所有从者数据写入到文件: {output_file}")
+    
+    formatted_data = {}
+    for name, details in fgo_data.items():
+        # 保留原始数据结构，不做过多处理
+        formatted_data[name] = {
+            "id": details.get("id", "未知"),
+            "稀有度": details.get("稀有度", "未知"),
+            "职阶": details.get("职阶", "未知"),
+            "宝具色卡": details.get("宝具色卡", "未知"),
+            "宝具类型": details.get("宝具类型", "未知"),
+            "获取途径": details.get("获取途径", "未知")
+        }
+    
+    try:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(formatted_data, f, ensure_ascii=False, indent=2)
+        print(f"成功将 {len(formatted_data)} 个从者数据写入到 {output_file}")
+    except Exception as e:
+        print(f"写入所有从者数据时出错: {e}")
+    
+    return formatted_data
+
 # --- 主程序 ---
 if __name__ == "__main__":
     print("开始执行脚本...")
@@ -570,9 +596,15 @@ if __name__ == "__main__":
     fgo_servants_data = {}
     if fgo_soup:
         fgo_servants_data = parse_fgo_wiki_html(fgo_soup)
+        
+        # 添加：输出所有从者数据
+        print_all_servants(fgo_servants_data, ALL_SERVANTS_FILE)
     else:
         print("未能加载本地HTML文件，使用测试数据。")
         fgo_servants_data = create_test_data(bangumi_character_map)
+        
+        # 即使使用测试数据，也输出所有从者
+        print_all_servants(fgo_servants_data, ALL_SERVANTS_FILE)
 
     # 2. 加载Bangumi ID映射文件
     bangumi_character_map = scrape_bangumi(BANGUMI_MAPPING_FILE)
